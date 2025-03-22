@@ -1,103 +1,146 @@
-import Image from "next/image";
+"use client"
+import React, { useEffect, useRef } from 'react';
 
-export default function Home() {
-  return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm/6 text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-[family-name:var(--font-geist-mono)] font-semibold">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
-
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
-        </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
-    </div>
-  );
+interface Particle {
+  x: number;
+  y: number;
+  z: number;
+  baseX: number;
+  baseY: number;
+  baseZ: number;
+  radius: number;
+  baseRadius: number;
+  opacity: number;
+  speed: number;
+  connections: number[];
+  floatOffsetX: number;
+  floatOffsetY: number;
+  floatOffsetZ: number;
 }
+
+const HelixWebVisualization: React.FC = () => {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    const setCanvasSize = () => {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    };
+    setCanvasSize();
+    window.addEventListener('resize', setCanvasSize);
+
+    const particlesPerHelix = 200;
+    const helixes: Particle[][] = [[], []];
+    const maxTwists = 3;
+    let twistDirection = 1;
+    let lastTime = 0;
+    let twistFactor = 0;
+
+    for (let h = 0; h < 2; h++) {
+      for (let i = 0; i < particlesPerHelix; i++) {
+        const angle = (i / particlesPerHelix) * Math.PI * 6;
+        const radius = 100;
+        const baseX = Math.cos(angle) * radius * (h === 0 ? 1 : -1);
+        const baseY = i * 2 - particlesPerHelix;
+        const baseZ = Math.sin(angle) * radius;
+        const speed = 0.1 + (Math.abs(baseY) / 200) * 0.8;
+        helixes[h].push({
+          x: baseX,
+          y: baseY,
+          z: baseZ,
+          baseX,
+          baseY,
+          baseZ,
+          radius: 1.5,
+          baseRadius: 1.5,
+          opacity: 0.7,
+          speed,
+          connections: [],
+          floatOffsetX: (Math.random() - 0.5) * 5,
+          floatOffsetY: (Math.random() - 0.5) * 5,
+          floatOffsetZ: (Math.random() - 0.5) * 5,
+        });
+      }
+    }
+
+    const animate = (timestamp: number) => {
+      ctx.fillStyle = 'rgb(0, 0, 20)';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      if (timestamp - lastTime > 5000) {
+        twistDirection *= -1;
+        lastTime = timestamp;
+      }
+
+      twistFactor = maxTwists * Math.sin((timestamp % 5000) / 5000 * Math.PI) * twistDirection;
+
+      const particles: Particle[] = [...helixes[0], ...helixes[1]];
+      particles.forEach((particle) => {
+        const timeFactor = timestamp * 0.0008;
+        const baseAngle = Math.atan2(particle.baseZ, particle.baseX);
+        const newAngle = baseAngle + twistFactor;
+        const distance = Math.sqrt(particle.baseX * particle.baseX + particle.baseZ * particle.baseZ);
+        particle.x = Math.cos(newAngle) * distance + particle.floatOffsetX;
+        particle.y = particle.baseY + particle.floatOffsetY;
+        particle.z = Math.sin(newAngle) * distance + particle.floatOffsetZ;
+      });
+
+      particles.forEach((particle) => {
+        particle.connections = [];
+      });
+
+      ctx.strokeStyle = 'rgba(0, 225, 255, 0.2)';
+      ctx.lineWidth = 1;
+      for (let i = 0; i < particles.length; i++) {
+        let connections = 0;
+        for (let j = 0; j < particles.length; j++) {
+          if (i !== j && connections < 3) {
+            const dx = particles[i].x - particles[j].x;
+            const dy = particles[i].y - particles[j].y;
+            const dz = particles[i].z - particles[j].z;
+            const distance = Math.sqrt(dx * dx + dy * dy + dz * dz);
+            if (distance >= 80 && distance <= 120 && Math.random() > 0.5) {
+              particles[i].connections.push(j);
+              connections++;
+            }
+          }
+        }
+      }
+
+      particles.forEach((particle, i) => {
+        particle.connections.forEach((j) => {
+          ctx.beginPath();
+          ctx.moveTo(canvas.width / 2 + particle.x, canvas.height / 2 + particle.y);
+          ctx.lineTo(canvas.width / 2 + particles[j].x, canvas.height / 2 + particles[j].y);
+          ctx.stroke();
+        });
+      });
+
+      particles.forEach((particle) => {
+        const perspective = 1000 / (1000 + particle.z);
+        const screenX = canvas.width / 2 + particle.x * perspective;
+        const screenY = canvas.height / 2 + particle.y * perspective;
+        ctx.fillStyle = `rgba(0, 225, 255, ${particle.opacity})`;
+        ctx.beginPath();
+        ctx.arc(screenX, screenY, particle.radius * perspective, 0, Math.PI * 2);
+        ctx.fill();
+      });
+
+      requestAnimationFrame(animate);
+    };
+
+    animate(0);
+    return () => {
+      window.removeEventListener('resize', setCanvasSize);
+    };
+  }, []);
+
+  return <canvas ref={canvasRef} className="absolute top-0 left-0 w-full h-full" style={{ background: 'rgb(0, 0, 20)' }} />;
+};
+
+export default HelixWebVisualization;
