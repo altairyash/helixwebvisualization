@@ -36,10 +36,7 @@ const HelixWebVisualization: React.FC = () => {
 
     const particlesPerHelix = 200;
     const helixes: Particle[][] = [[], []];
-    const maxTwists = 3;
-    let twistDirection = 1;
-    let lastTime = 0;
-    let twistFactor = 0;
+    let rotationAngle = 0;
 
     for (let h = 0; h < 2; h++) {
       for (let i = 0; i < particlesPerHelix; i++) {
@@ -48,7 +45,6 @@ const HelixWebVisualization: React.FC = () => {
         const baseX = Math.cos(angle) * radius * (h === 0 ? 1 : -1);
         const baseY = i * 2 - particlesPerHelix;
         const baseZ = Math.sin(angle) * radius;
-        const speed = 0.1 + (Math.abs(baseY) / 200) * 0.8;
         helixes[h].push({
           x: baseX,
           y: baseY,
@@ -59,7 +55,7 @@ const HelixWebVisualization: React.FC = () => {
           radius: 1.5,
           baseRadius: 1.5,
           opacity: 0.7,
-          speed,
+          speed: 0.1 + (Math.abs(baseY) / 200) * 0.8,
           connections: [],
           floatOffsetX: (Math.random() - 0.5) * 5,
           floatOffsetY: (Math.random() - 0.5) * 5,
@@ -68,22 +64,16 @@ const HelixWebVisualization: React.FC = () => {
       }
     }
 
-    const animate = (timestamp: number) => {
-      ctx.fillStyle = 'rgb(0, 0, 20)';
+    const animate = () => {
+      ctx.fillStyle = 'rgb(0, 0, 0)';
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-      if (timestamp - lastTime > 5000) {
-        twistDirection *= -1;
-        lastTime = timestamp;
-      }
-
-      twistFactor = maxTwists * Math.sin((timestamp % 5000) / 5000 * Math.PI) * twistDirection;
+      rotationAngle += 0.005; // Continuous smooth rotation
 
       const particles: Particle[] = [...helixes[0], ...helixes[1]];
       particles.forEach((particle) => {
-        const timeFactor = timestamp * 0.0008;
         const baseAngle = Math.atan2(particle.baseZ, particle.baseX);
-        const newAngle = baseAngle + twistFactor;
+        const newAngle = baseAngle + rotationAngle;
         const distance = Math.sqrt(particle.baseX * particle.baseX + particle.baseZ * particle.baseZ);
         particle.x = Math.cos(newAngle) * distance + particle.floatOffsetX;
         particle.y = particle.baseY + particle.floatOffsetY;
@@ -94,7 +84,7 @@ const HelixWebVisualization: React.FC = () => {
         particle.connections = [];
       });
 
-      ctx.strokeStyle = 'rgba(0, 225, 255, 0.2)';
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
       ctx.lineWidth = 1;
       for (let i = 0; i < particles.length; i++) {
         let connections = 0;
@@ -125,7 +115,7 @@ const HelixWebVisualization: React.FC = () => {
         const perspective = 1000 / (1000 + particle.z);
         const screenX = canvas.width / 2 + particle.x * perspective;
         const screenY = canvas.height / 2 + particle.y * perspective;
-        ctx.fillStyle = `rgba(0, 225, 255, ${particle.opacity})`;
+        ctx.fillStyle = `rgba(255, 225, 255, ${particle.opacity})`;
         ctx.beginPath();
         ctx.arc(screenX, screenY, particle.radius * perspective, 0, Math.PI * 2);
         ctx.fill();
@@ -134,13 +124,13 @@ const HelixWebVisualization: React.FC = () => {
       requestAnimationFrame(animate);
     };
 
-    animate(0);
+    animate();
     return () => {
       window.removeEventListener('resize', setCanvasSize);
     };
   }, []);
 
-  return <canvas ref={canvasRef} className="absolute top-0 left-0 w-full h-full" style={{ background: 'rgb(0, 0, 20)' }} />;
+  return <canvas ref={canvasRef} className="absolute top-0 left-0 w-full h-full" style={{ background: 'rgb(0, 0, 0)' }} />;
 };
 
 export default HelixWebVisualization;
